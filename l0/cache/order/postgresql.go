@@ -1,7 +1,7 @@
 package order
 
 import (
-	"L0/cache"
+	"L0/cacheModel"
 	"L0/postgresDataBase"
 	"context"
 	"errors"
@@ -18,7 +18,7 @@ func formatQuery(q string) string {
 	return strings.ReplaceAll(strings.ReplaceAll(q, "\t", ""), "\n", " ")
 }
 
-func (r *repository) Create(ctx context.Context, order *cache.Order) error {
+func (r *repository) Create(ctx context.Context, order *cacheModel.Order) error {
 	q := `
 		INSERT INTO orders 
 		    (order_uid, track_number, entry, del_phone, locale, internal_signature, customer_id, delivery_service, shardkey, sm_id, date_created, oof_shard) 
@@ -42,7 +42,7 @@ func (r *repository) Create(ctx context.Context, order *cache.Order) error {
 	return nil
 }
 
-func (r *repository) FindAll(ctx context.Context) (u map[string]cache.Order, err error) {
+func (r *repository) FindAll(ctx context.Context) (u map[string]cacheModel.Order, err error) {
 	q := `
 		SELECT order_uid, track_number, entry, del_phone, locale, internal_signature, customer_id, delivery_service, shardkey, sm_id, date_created, oof_shard FROM public.orders;
 	`
@@ -51,10 +51,10 @@ func (r *repository) FindAll(ctx context.Context) (u map[string]cache.Order, err
 		return nil, err
 	}
 
-	orders := make(map[string]cache.Order, 0)
+	orders := make(map[string]cacheModel.Order, 0)
 
 	for rows.Next() {
-		var ord cache.Order
+		var ord cacheModel.Order
 
 		err = rows.Scan(&ord.Order_uid, &ord.Track_number, &ord.Entry, &ord.Del_phone, &ord.Locale,
 			&ord.Internal_signature, &ord.Customer_id, &ord.Delivery_service, &ord.Shardkey,

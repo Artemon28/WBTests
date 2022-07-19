@@ -4,6 +4,7 @@ import (
 	"L0/cache/delivery"
 	"L0/cache/order"
 	"L0/cache/payment"
+	"L0/cacheModel"
 	"L0/postgresDataBase"
 	"context"
 )
@@ -14,7 +15,7 @@ import (
 //находит все итемы по id заказа, складывает в массив и также присоединяет к заказу
 //всё складируется в мапе - наш кэш
 
-func recover(client postgresDataBase.Client) map[string]Order {
+func recover(client postgresDataBase.Client) map[string]cacheModel.Order {
 	newRepository := order.NewRepository(client)
 	orders, _ := newRepository.FindAll(context.TODO())
 	for _, value := range orders {

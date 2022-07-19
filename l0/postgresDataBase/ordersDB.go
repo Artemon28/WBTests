@@ -1,7 +1,7 @@
 package postgresDataBase
 
 import (
-	"L0/cache"
+	"L0/cacheModel"
 	"context"
 	"fmt"
 	"github.com/jackc/pgconn"
@@ -37,7 +37,7 @@ func NewClient(ctx context.Context, cc ConnectionConfig) (pool *pgxpool.Pool, er
 	return pool, nil
 }
 
-func WriteToDB(order Client, orderStruct cache.Order) {
+func WriteToDB(order Client, orderStruct cacheModel.Order) {
 	// urlExample := "postgres://username:password@localhost:5432/database_name"
 	conn, err := pgx.Connect(context.Background(), os.Getenv("DATABASE_URL"))
 	if err != nil {

@@ -1,7 +1,7 @@
 package main
 
 import (
-	"L0/cache"
+	"L0/cacheModel"
 	"L0/postgresDataBase"
 	"context"
 )
@@ -13,8 +13,8 @@ func main() {
 	connectionConfig := postgresDataBase.ConnectionConfig{Username: "postgres", Password: "UJBNVJ", Host: "postgres", Port: "5432", Database: "postgres"}
 	connection, _ := postgresDataBase.NewClient(context.TODO(), connectionConfig)
 
-	var orderCache map[string]cache.Order
-	newOrder := cache.Order{}
+	var orderCache map[string]cacheModel.Order
+	newOrder := cacheModel.Order{}
 	orderCache[newOrder.Order_uid] = newOrder
 	postgresDataBase.WriteToDB(connection, newOrder)
 }

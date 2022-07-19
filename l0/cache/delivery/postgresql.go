@@ -1,7 +1,7 @@
 package delivery
 
 import (
-	"L0/cache"
+	"L0/cacheModel"
 	"L0/postgresDataBase"
 	"context"
 	"errors"
@@ -18,7 +18,7 @@ func formatQuery(q string) string {
 	return strings.ReplaceAll(strings.ReplaceAll(q, "\t", ""), "\n", " ")
 }
 
-func (r *repository) Create(ctx context.Context, delivery *cache.Delivery) error {
+func (r *repository) Create(ctx context.Context, delivery *cacheModel.Delivery) error {
 	q := `
 		INSERT INTO delivery 
 		    (name, phone_number, zip, city, address, region, email) 
@@ -41,14 +41,14 @@ func (r *repository) Create(ctx context.Context, delivery *cache.Delivery) error
 	return nil
 }
 
-func (r *repository) FindOne(ctx context.Context, phone string) (cache.Delivery, error) {
+func (r *repository) FindOne(ctx context.Context, phone string) (cacheModel.Delivery, error) {
 	q := `
 		SELECT name, phone_number, zip, city, address, region, email FROM public.delivery WHERE phone_number = $1
 	`
-	var del cache.Delivery
+	var del cacheModel.Delivery
 	err := r.client.QueryRow(ctx, q, phone).Scan(&del.Name, &del.Phone, &del.Zip, &del.City, &del.Address, &del.Region, &del.Email)
 	if err != nil {
-		return cache.Delivery{}, err
+		return cacheModel.Delivery{}, err
 	}
 
 	return del, nil

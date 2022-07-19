@@ -1,7 +1,7 @@
 package payment
 
 import (
-	"L0/cache"
+	"L0/cacheModel"
 	"L0/postgresDataBase"
 	"context"
 	"errors"
@@ -18,7 +18,7 @@ func formatQuery(q string) string {
 	return strings.ReplaceAll(strings.ReplaceAll(q, "\t", ""), "\n", " ")
 }
 
-func (r *repository) Create(ctx context.Context, payment *cache.Payment) error {
+func (r *repository) Create(ctx context.Context, payment *cacheModel.Payment) error {
 	q := `
 		INSERT INTO payment 
 		    (transaction, request_id, currency, provider, amount, payment_dt, bank, delivery_cost, goods_total, custom_fee) 
@@ -41,15 +41,15 @@ func (r *repository) Create(ctx context.Context, payment *cache.Payment) error {
 	return nil
 }
 
-func (r *repository) FindOne(ctx context.Context, trans string) (cache.Payment, error) {
+func (r *repository) FindOne(ctx context.Context, trans string) (cacheModel.Payment, error) {
 	q := `
 		SELECT transaction, request_id, currency, provider, amount, payment_dt, bank, delivery_cost, goods_total, custom_fee WHERE transaction = $1
 	`
-	var pay = cache.Payment{}
+	var pay = cacheModel.Payment{}
 	err := r.client.QueryRow(ctx, q, trans).Scan(&pay.Transaction, &pay.Request_id, &pay.Currency, &pay.Provider, &pay.Amount, &pay.Payment_dt,
 		&pay.Bank, &pay.Delivery_cost, &pay.Goods_total, &pay.Custom_fee)
 	if err != nil {
-		return cache.Payment{}, err
+		return cacheModel.Payment{}, err
 	}
 
 	return pay, nil
