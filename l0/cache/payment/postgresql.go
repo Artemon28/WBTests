@@ -43,7 +43,8 @@ func (r *repository) Create(ctx context.Context, payment *cacheModel.Payment) er
 
 func (r *repository) FindOne(ctx context.Context, trans string) (cacheModel.Payment, error) {
 	q := `
-		SELECT transaction, request_id, currency, provider, amount, payment_dt, bank, delivery_cost, goods_total, custom_fee WHERE transaction = $1
+		SELECT transaction, request_id, currency, provider, amount, payment_dt, bank, delivery_cost, goods_total,
+		custom_fee FROM public.payment WHERE transaction = $1
 	`
 	var pay = cacheModel.Payment{}
 	err := r.client.QueryRow(ctx, q, trans).Scan(&pay.Transaction, &pay.Request_id, &pay.Currency, &pay.Provider, &pay.Amount, &pay.Payment_dt,
