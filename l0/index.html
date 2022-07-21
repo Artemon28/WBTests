@@ -18,7 +18,7 @@
 <script>
     const order = document.querySelector('.order')
     async function renderOrder(uid) {
-        const response = await fetch('/order/', {method: 'GET'})
+        const response = await fetch('/order/', {method: 'POST', body: uid})
         jsonResponse = await response.json();
         if (response.statusText !== "OK") {
             throw new Error(`Failed to sign in user: ${response.statusText}`);

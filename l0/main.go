@@ -7,6 +7,7 @@ import (
 	"context"
 	"encoding/json"
 	"github.com/nats-io/stan.go"
+	"io/ioutil"
 	"net/http"
 )
 
@@ -33,21 +34,25 @@ func main() {
 	})
 	defer sub.Close()
 
-	var order cacheModel.Order
-
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, "L0/index.html")
 	})
 
 	http.HandleFunc("/order/", func(w http.ResponseWriter, r *http.Request) {
 		defer r.Body.Close()
-
+		body, _ := ioutil.ReadAll(r.Body)
+		_, ok := orderCache[string(body)]
 		switch r.Method {
-		case http.MethodGet:
-			orderJson, _ := json.Marshal(order)
+		case http.MethodPost:
+			orderJson, _ := json.Marshal(orderCache[string(body)])
 			w.Header().Set("Content-Type", "application/json")
-			w.WriteHeader(http.StatusOK)
-			w.Write(orderJson)
+			if ok {
+				w.WriteHeader(http.StatusOK)
+				w.Write(orderJson)
+			} else {
+				w.WriteHeader(http.StatusBadRequest)
+				w.Write(nil)
+			}
 		default:
 			w.WriteHeader(http.StatusMethodNotAllowed)
 		}
