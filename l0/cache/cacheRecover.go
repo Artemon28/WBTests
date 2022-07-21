@@ -21,13 +21,14 @@ import (
 func Recover(client postgresDataBase.Client) map[string]cacheModel.Order {
 	newRepository := order.NewRepository(client)
 	orders, _ := newRepository.FindAll(context.TODO())
-	for _, value := range orders {
+	for key, value := range orders {
 		del, _ := delivery.NewRepository(client).FindOne(context.TODO(), value.Del_phone)
 		pay, _ := payment.NewRepository(client).FindOne(context.TODO(), value.Order_uid)
 		items, _ := item.NewRepository(client).FindAll(context.TODO(), value.Order_uid)
 		value.Delivery = del
 		value.Payment = pay
 		value.Items = items
+		orders[key] = value
 	}
 	return orders
 }

@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+<form action="/order/" method="GET" class="form">
+    <label>Insert order uid</label>
+    <br>
+    <input name="id">
+    <br>
+    <button type="submit" class="button" id="get-order">Get order by uid</button>
+</form>
+<div class="order">
+</div>
+</body>
+<script>
+    const order = document.querySelector('.order')
+    async function renderOrder(uid) {
+        const response = await fetch('/order/', {method: 'GET'})
+        jsonResponse = await response.json();
+        if (response.statusText !== "OK") {
+            throw new Error(`Failed to sign in user: ${response.statusText}`);
+        }
+        order.innerHTML = getJsonString(jsonResponse)
+    }
+
+    function getJsonString(object){
+        var stringResponse = JSON.stringify(object)
+        var jsonOrder = JSON.parse(stringResponse);
+        var str = ""
+        for (key in jsonOrder) {
+            if (jsonOrder.hasOwnProperty(key)) {
+                if (typeof jsonOrder[key] == 'object')
+                    str += `<br><div>${key}- ${getJsonString(jsonOrder[key])}</div><br>`
+                else
+                    str += `<div>${key}: ${jsonOrder[key]}</div>`;
+            }
+        }
+        return str
+    }
+
+    document.querySelector('form').addEventListener('submit', (event) => {
+        event.preventDefault();
+        let uid = event.target.elements['id'].value;
+        renderOrder(uid);
+    });
+</script>
+</html>

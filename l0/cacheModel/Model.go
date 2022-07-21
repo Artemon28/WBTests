@@ -16,7 +16,7 @@ type Order struct {
 	Shardkey           int       `json:"shardkey"`
 	Sm_id              int       `json:"sm_id"`
 	Date_created       time.Time `json:"date_created"`
-	Oof_shard          string    `json:"oof_shard"`
+	Oof_shard          int       `json:"oof_shard"`
 	Delivery           Delivery
 	Payment            Payment
 	Items              []Item

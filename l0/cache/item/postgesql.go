@@ -42,9 +42,9 @@ func (r *repository) Create(ctx context.Context, item *cacheModel.Item) error {
 }
 
 func (r *repository) FindAll(ctx context.Context, order_uid string) ([]cacheModel.Item, error) {
-	q := `SELECT chrt_id, track_number, price, rid, name, sale, size, total_price, nm_id, brand, status
+	q := `SELECT public.item.chrt_id, track_number, price, rid, name, sale, size, total_price, nm_id, brand, status
 			FROM public.item
-			JOIN public.items_in_order ON public.items.chr_id=public.items_in_order.chrt_id
+			JOIN public.items_in_order ON public.item.chrt_id=public.items_in_order.chrt_id
 			WHERE public.items_in_order.order_uid = $1
 	`
 
