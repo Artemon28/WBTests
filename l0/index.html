@@ -27,6 +27,10 @@
     const order = document.querySelector('.order')
     async function renderOrder(uid) {
         const response = await fetch('/order/', {method: 'POST', body: uid})
+        if (response.status === 404){
+            order.innerHTML = '<div>No such uid in system</div>'
+            return
+        }
         jsonResponse = await response.json();
         if (response.statusText !== "OK") {
             throw new Error(`Failed to sign in user: ${response.statusText}`);

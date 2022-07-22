@@ -30,6 +30,9 @@ func (r *repository) Create(ctx context.Context, payment *cacheModel.Payment) er
 		payment.Amount, payment.Payment_dt, payment.Bank, payment.Delivery_cost, payment.Goods_total, payment.Custom_fee).
 		Scan(&createString); err != nil {
 		var pgErr *pgconn.PgError
+		if err.Error() == "no rows in result set" {
+			return nil
+		}
 		if errors.As(err, &pgErr) {
 			pgErr = err.(*pgconn.PgError)
 			newErr := fmt.Errorf(fmt.Sprintf("SQL Error: %s, Detail: %s, Where: %s, Code: %s, SQLState: %s", pgErr.Message, pgErr.Detail, pgErr.Where, pgErr.Code, pgErr.SQLState()))

@@ -25,11 +25,13 @@ func (r *repository) Create(ctx context.Context, delivery *cacheModel.Delivery) 
 		VALUES 
 		       ($1, $2, $3, $4, $5, $6, $7)
 	`
-	var createString string
 	if err := r.client.QueryRow(ctx, q, delivery.Name, delivery.Phone, delivery.Zip,
 		delivery.City, delivery.Address, delivery.Region, delivery.Email).
-		Scan(&createString); err != nil {
+		Scan(); err != nil {
 		var pgErr *pgconn.PgError
+		if err.Error() == "no rows in result set" {
+			return nil
+		}
 		if errors.As(err, &pgErr) {
 			pgErr = err.(*pgconn.PgError)
 			newErr := fmt.Errorf(fmt.Sprintf("SQL Error: %s, Detail: %s, Where: %s, Code: %s, SQLState: %s", pgErr.Message, pgErr.Detail, pgErr.Where, pgErr.Code, pgErr.SQLState()))

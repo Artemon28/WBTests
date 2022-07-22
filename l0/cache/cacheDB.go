@@ -39,12 +39,11 @@ func Recover(client postgresDataBase.Client) (map[string]cacheModel.Order, error
 }
 
 func WriteToDB(client postgresDataBase.Client, newOrder cacheModel.Order) error {
-	newRepository := order.NewRepository(client)
-	err := newRepository.Create(context.TODO(), &newOrder)
+	err := delivery.NewRepository(client).Create(context.TODO(), &newOrder.Delivery)
 	if err != nil {
 		return err
 	}
-	err = delivery.NewRepository(client).Create(context.TODO(), &newOrder.Delivery)
+	err = order.NewRepository(client).Create(context.TODO(), &newOrder)
 	if err != nil {
 		return err
 	}

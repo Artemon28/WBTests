@@ -28,6 +28,9 @@ func (r *repository) Create(ctx context.Context, order_uid string, chrt_id int) 
 	if err := r.client.QueryRow(ctx, q, order_uid, chrt_id).
 		Scan(&createString); err != nil {
 		var pgErr *pgconn.PgError
+		if err.Error() == "no rows in result set" {
+			return nil
+		}
 		if errors.As(err, &pgErr) {
 			pgErr = err.(*pgconn.PgError)
 			newErr := fmt.Errorf(fmt.Sprintf("SQL Error: %s, Detail: %s, Where: %s, Code: %s, SQLState: %s", pgErr.Message, pgErr.Detail, pgErr.Where, pgErr.Code, pgErr.SQLState()))
