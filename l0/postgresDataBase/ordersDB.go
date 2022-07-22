@@ -28,7 +28,7 @@ func NewClient(ctx context.Context, cc ConnectionConfig) (pool *pgxpool.Pool, er
 	dsn := fmt.Sprintf("postgresql://%s:%s@%s:%s/%s", cc.Username, cc.Password, cc.Host, cc.Port, cc.Database)
 	pool, err = pgxpool.Connect(ctx, dsn)
 	if err != nil {
-		log.Fatal("error do with tries postgresql")
+		log.Fatal("error do with tries postgresql", err)
 	}
 
 	return pool, nil

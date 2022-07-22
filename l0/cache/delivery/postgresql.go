@@ -37,7 +37,6 @@ func (r *repository) Create(ctx context.Context, delivery *cacheModel.Delivery) 
 		}
 		return err
 	}
-
 	return nil
 }
 
@@ -50,7 +49,6 @@ func (r *repository) FindOne(ctx context.Context, phone string) (cacheModel.Deli
 	if err != nil {
 		return cacheModel.Delivery{}, err
 	}
-
 	return del, nil
 }
 
