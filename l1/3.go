@@ -5,11 +5,8 @@ import (
 )
 
 func squareWorker(values <-chan int, results chan<- int) {
-	for j := range values {
-		results <- j * j
-	}
-	//v := <-values
-	//results <- v * v
+	v := <-values
+	results <- v * v
 }
 
 func main() {
