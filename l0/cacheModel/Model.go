@@ -1,6 +1,7 @@
 package cacheModel
 
 import (
+	"errors"
 	"time"
 )
 
@@ -13,10 +14,10 @@ type Order struct {
 	Internal_signature string    `json:"internal_signature"`
 	Customer_id        string    `json:"customer_id"`
 	Delivery_service   string    `json:"delivery_service"`
-	Shardkey           int       `json:"shardkey"`
+	Shardkey           string    `json:"shardkey"`
 	Sm_id              int       `json:"sm_id"`
 	Date_created       time.Time `json:"date_created"`
-	Oof_shard          int       `json:"oof_shard"`
+	Oof_shard          string    `json:"oof_shard"`
 	Delivery           Delivery
 	Payment            Payment
 	Items              []Item
@@ -25,7 +26,7 @@ type Order struct {
 type Delivery struct {
 	Name    string `json:"name"`
 	Phone   string `json:"phone"`
-	Zip     int64  `json:"zip"`
+	Zip     string `json:"zip"`
 	City    string `json:"city"`
 	Address string `json:"address"`
 	Region  string `json:"region"`
@@ -34,7 +35,7 @@ type Delivery struct {
 
 type Payment struct {
 	Transaction   string `json:"transaction"`
-	Request_id    int    `json:"request_id"`
+	Request_id    string `json:"request_id"`
 	Currency      string `json:"currency"`
 	Provider      string `json:"provider"`
 	Amount        int    `json:"amount"`
@@ -57,4 +58,17 @@ type Item struct {
 	Nm_id        int64  `json:"nm_id"`
 	Brand        string `json:"brand"`
 	Status       int    `json:"status"`
+}
+
+//Здесь необходимо прописать проверку важных для заказа полей и выдать ошибку, если они указаны неверно или не указаны
+func ModelCheck(order Order) error {
+	if order.Order_uid == "" || order.Payment.Transaction != order.Order_uid || order.Delivery.Phone == "" {
+		return errors.New("Еhe required fields are missing in the model")
+	}
+	for _, value := range order.Items {
+		if value.Chrt_id == 0 {
+			return errors.New("Id of some Item is nil")
+		}
+	}
+	return nil
 }

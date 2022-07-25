@@ -46,7 +46,7 @@ func main() {
 		if err != nil {
 			log.Fatal("Error with writing data from canal to DB", err)
 		}
-	})
+	}, stan.DurableName("my-durable"))
 	if err != nil {
 		log.Println(err)
 	}
