@@ -54,7 +54,7 @@ func main() {
 
 	//Http server connection
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		http.ServeFile(w, r, "L0/index.html")
+		http.ServeFile(w, r, "index.html")
 	})
 
 	http.HandleFunc("/order/", func(w http.ResponseWriter, r *http.Request) {
