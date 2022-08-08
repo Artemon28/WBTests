@@ -1,27 +1,31 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"math/rand"
+	"os"
+	"os/signal"
+	"syscall"
 	"time"
 )
 
-func reader(chanToRead <-chan int, quit <-chan bool) {
+func reader(chanToRead <-chan int, ctx context.Context) {
 	for {
 		select {
 		case i := <-chanToRead:
 			fmt.Println(i)
-		case <-quit:
+		case <-ctx.Done():
 			return
 		}
 
 	}
 }
 
-func writer(chanToWrite chan<- int, quit <-chan bool) {
+func writer(chanToWrite chan<- int, ctx context.Context) {
 	for {
 		select {
-		case <-quit:
+		case <-ctx.Done():
 			return
 		default:
 			chanToWrite <- rand.Int()
@@ -37,9 +41,14 @@ func main() {
 	seconds += "s"
 	d, _ := time.ParseDuration(seconds)
 	ch := make(chan int)
-	quit := make(chan bool)
-	go writer(ch, quit)
-	go reader(ch, quit)
-	<-time.After(d)
-	quit <- true
+
+	ctx := context.Background()
+	ctx, _ = context.WithTimeout(ctx, d)
+
+	go writer(ch, ctx)
+	go reader(ch, ctx)
+
+	shutdownSignal := make(chan os.Signal, 1)
+	signal.Notify(shutdownSignal, syscall.SIGINT)
+	<-shutdownSignal
 }

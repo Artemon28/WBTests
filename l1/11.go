@@ -29,6 +29,7 @@ func main() {
 	fmt.Println(resultSet)
 
 	//решение за O(nLogn) и лишнии O(n) на массивы
+	//перевести множества в массивы, отсортировать и после этого найти перресечения
 	var resultSet2 = make(map[string]struct{})
 	arr1 := []string{}
 	for k, _ := range set1 {
