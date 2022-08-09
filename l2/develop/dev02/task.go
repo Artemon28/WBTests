@@ -9,7 +9,7 @@ import (
 )
 
 func main() {
-	newString, err := StringUnpacking("jnuin6vh")
+	newString, err := StringUnpacking("q1")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -30,7 +30,7 @@ func StringUnpacking(s string) (string, error) {
 			qty = qty*10 + intRune
 		} else { //there are rune
 			if qty > 0 {
-				for i := 0; i <= qty; i++ {
+				for i := 0; i < qty; i++ {
 					result.WriteRune(prev)
 				}
 				qty = 0
@@ -43,7 +43,8 @@ func StringUnpacking(s string) (string, error) {
 		}
 	}
 	if prev != 0 {
-		for i := 0; i <= qty; i++ {
+		result.WriteRune(prev)
+		for i := 1; i < qty; i++ {
 			result.WriteRune(prev)
 		}
 	}
