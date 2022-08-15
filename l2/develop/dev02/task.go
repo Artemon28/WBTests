@@ -22,7 +22,6 @@ func StringUnpacking(s string) (string, error) {
 	qty := 0
 	for _, c := range s {
 		intRune, err := strconv.Atoi(string(c))
-		//if err == nil && prev != '\\' { //there are int
 		if err == nil { //there are int
 			if prev == 0 {
 				return "", errors.New("no Rune before int: " + strconv.Itoa(intRune))
@@ -35,9 +34,7 @@ func StringUnpacking(s string) (string, error) {
 				}
 				qty = 0
 			} else if prev != 0 {
-				//if prev != '\\' || (prev == '\\' && c == '\\') {
 				result.WriteRune(prev)
-				//}
 			}
 			prev = c
 		}
