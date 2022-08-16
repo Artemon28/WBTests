@@ -11,15 +11,15 @@ import (
 )
 
 func main() {
-	ListenCommand()
-}
-
-func ListenCommand() {
 	fmt.Printf("Write you command here:\n")
 	myscanner := bufio.NewScanner(os.Stdin)
 	myscanner.Scan()
 	str := myscanner.Text()
 	str = strings.TrimSpace(str)
+	ListenCommand(str)
+}
+
+func ListenCommand(str string) {
 	utility := "sort"
 	if strings.HasPrefix(str, utility) {
 		commandKeys := make(map[byte]int)
