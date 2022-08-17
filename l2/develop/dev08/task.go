@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"errors"
 	"fmt"
 	"log"
 	"os"
@@ -10,6 +11,10 @@ import (
 )
 
 func main() {
+	shell()
+}
+
+func shell() {
 	for {
 		var command string
 		fmt.Scan(&command)
@@ -17,12 +22,11 @@ func main() {
 		case "\\q":
 			os.Exit(0)
 		case "cd":
-			var argument string
-			_, err2 := fmt.Scan(&argument)
-			if err2 != nil {
-				log.Fatal(err2)
+			arguments, err := getArgs()
+			if err != nil {
+				log.Fatal(err)
 			}
-			err := os.Chdir(argument)
+			err = os.Chdir((*arguments)[0])
 			if err != nil {
 				log.Fatal(err)
 			}
@@ -30,19 +34,18 @@ func main() {
 			dir, _ := os.Getwd()
 			fmt.Println(dir)
 		case "echo":
-			var argument string
-			_, err2 := fmt.Scan(&argument)
-			if err2 != nil {
-				log.Fatal(err2)
+			arguments, err := getArgs()
+			if err != nil {
+				log.Fatal(err)
 			}
-			fmt.Print(argument)
+			fmt.Print(arguments)
 		case "kill":
-			var argument string
-			_, err2 := fmt.Scan(&argument)
-			if err2 != nil {
-				log.Fatal(err2)
+			arguments, err := getArgs()
+			if err != nil {
+				log.Fatal(err)
 			}
-			cmd := exec.Command("cmd", "/C", "taskkill /PID ", argument)
+			*arguments = append([]string{"/C", "taskkill /PID "}, *arguments...)
+			cmd := exec.Command("cmd", *arguments...)
 			if err := cmd.Run(); err != nil {
 				log.Fatal(err)
 			}
@@ -62,18 +65,28 @@ func main() {
 				log.Fatal(err)
 			}
 		case "exec":
-			sc := bufio.NewScanner(os.Stdin)
-			for sc.Scan() {
-				arguments := strings.Fields(sc.Text())
-				arguments = append([]string{"/C", "start"}, arguments...)
-				cmd := exec.Command("cmd.exe", arguments...)
-				out, err := cmd.CombinedOutput()
-				if err != nil {
-					log.Fatal(err)
-				}
-				fmt.Print(string(out))
+			arguments, err := getArgs()
+			if err != nil {
+				log.Fatal(err)
 			}
+			*arguments = append([]string{"/C", "start"}, *arguments...)
+			cmd := exec.Command("cmd.exe", *arguments...)
+			out, err := cmd.CombinedOutput()
+			if err != nil {
+				log.Fatal(err)
+			}
+			fmt.Print(string(out))
 		}
 
 	}
+}
+
+func getArgs() (*[]string, error) {
+	sc := bufio.NewScanner(os.Stdin)
+	var arguments []string
+	for sc.Scan() {
+		arguments = strings.Fields(sc.Text())
+		return &arguments, nil
+	}
+	return nil, errors.New("Wrong arguments")
 }
