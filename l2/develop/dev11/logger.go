@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"fmt"
 	"log"
 	"net/http"
 )
@@ -43,9 +44,9 @@ func LogMiddleware(next http.Handler) http.Handler {
 			logger.Println(r.Method)
 			switch r.Method {
 			case http.MethodPost:
-				log.Println(r.Body)
+				logger.Println(r.Body)
 			case http.MethodGet:
-				log.Println(r.URL)
+				logger.Println(r.URL)
 			default:
 				logger.Println("unknown method")
 			}
@@ -53,5 +54,6 @@ func LogMiddleware(next http.Handler) http.Handler {
 			wrapped := wrapResponseWriter(w)
 			next.ServeHTTP(wrapped, r)
 			logger.Println(wrapped.status)
+			fmt.Print(&buf)
 		})
 }
