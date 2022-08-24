@@ -8,7 +8,6 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"regexp"
 	"strings"
 )
 
@@ -16,22 +15,18 @@ type flags struct {
 	A bool
 }
 
-var (
-	extensions = []string{".png", ".jpg", ".jpeg", ".json", ".js", ".pdf", ".txt", ".gif", ".bmp", ".zip", ".svg", ".json", ".xml", ".dll", ".css"}
-	validURL   = regexp.MustCompile(`\(([^()]*)\)`)
-	validCSS   = regexp.MustCompile(`\{(\s*?.*?)*?\}`)
-)
-
 func main() {
 	var fl flags
 	flag.BoolVar(&fl.A, "A", true, "Download all website")
 	flag.Parse()
 	//url := flag.Args()[0]
-	url := "https://artemonweb2.herokuapp.com"
+	url := "https://go.dev"
 	wget(fl, url)
 }
 
-func getLinks(domain string) (page Page, attachments []string, err error) {
+//получаем все сылки и асеты для страницы
+func getLinks(domain string, depth int) (page Page, attachments []string, err error) {
+	page.Links = make(map[string]int, 1000)
 	resp, err := http.Get(domain)
 	if err != nil {
 		return
@@ -50,44 +45,15 @@ func getLinks(domain string) (page Page, attachments []string, err error) {
 
 	page.URL = domain
 
-	//foundMeta := false
-
 	var f func(*html.Node)
 	f = func(n *html.Node) {
-		for _, a := range n.Attr {
-			if a.Key == "style" {
-				if strings.Contains(a.Val, "url(") {
-					found := string(validURL.Find([]byte(a.Val)))
-					if found != "" {
-						link, err := resp.Request.URL.Parse(found)
-						if err == nil {
-							attachments = append(attachments, link.String())
-						}
-					}
-				}
-			}
-		}
-
-		//if n.Type == html.ElementNode && n.Data == "meta" {
-		//	for _, a := range n.Attr {
-		//		if a.Key == "name" && a.Val == "robots" {
-		//			foundMeta = true
-		//		}
-		//		if foundMeta {
-		//			if a.Key == "content" && strings.Contains(a.Val, "noindex") {
-		//				page.NoIndex = true
-		//			}
-		//		}
-		//	}
-		//}
-
-		// Get CSS and AMP
+		// Get CSS
 		if n.Type == html.ElementNode && n.Data == "link" {
 			for _, a := range n.Attr {
 				if a.Key == "href" {
 					link, err := resp.Request.URL.Parse(a.Val)
 					if err == nil {
-						page.Links = append(page.Links, link.String())
+						attachments = append(attachments, link.String())
 					}
 				}
 			}
@@ -114,15 +80,6 @@ func getLinks(domain string) (page Page, attachments []string, err error) {
 						attachments = append(attachments, link.String())
 					}
 				}
-				if a.Key == "srcset" {
-					links := strings.Split(a.Val, " ")
-					for _, val := range links {
-						link, err := resp.Request.URL.Parse(val)
-						if err == nil {
-							attachments = append(attachments, link.String())
-						}
-					}
-				}
 			}
 		}
 
@@ -138,7 +95,7 @@ func getLinks(domain string) (page Page, attachments []string, err error) {
 				}
 
 			}
-			page.Links = append(page.Links, newLink)
+			page.Links[newLink] = depth
 		}
 
 		for c := n.FirstChild; c != nil; c = c.NextSibling {
@@ -150,11 +107,10 @@ func getLinks(domain string) (page Page, attachments []string, err error) {
 }
 
 type Page struct {
-	URL       string
-	Canonical string
-	Links     []string
-	NoIndex   bool
-	HTML      string
+	depth int
+	URL   string
+	Links map[string]int
+	HTML  string
 }
 
 func wget(fl flags, url string) {
@@ -165,21 +121,19 @@ func wget(fl flags, url string) {
 			return
 		}
 		defer resp.Body.Close()
-		//Path - ./website
-		//Domain - url
 
-		var indexed, files []string
+		var files []string
 
-		scanning := make(chan int, 3)              // Semaphore
-		newLinks := make(chan []string, 100000)    // New links to scan
-		pages := make(chan Page, 100000)           // Pages scanned
-		attachments := make(chan []string, 100000) // Attachments
-		started := make(chan int, 100000)          // Crawls started
-		finished := make(chan int, 100000)         // Crawls finished
+		newLinks := make(chan map[string]int, 100000) // New links to scan
+		pages := make(chan Page, 100000)              // Pages scanned
+		attachments := make(chan []string, 100000)    // Attachments
+		started := make(chan int, 100000)             // Crawls started
+		finished := make(chan int, 100000)            // Crawls finished
 
 		seen := make(map[string]bool)
+		saved := make(map[string]Page)
 
-		page, attached, _ := getLinks(url)
+		page, attached, _ := getLinks(url, 0)
 		pages <- page
 		attachments <- attached
 
@@ -187,34 +141,50 @@ func wget(fl flags, url string) {
 		newLinks <- page.Links
 		seen[url] = true
 
+	EXIT:
 		for {
 			select {
 			case links := <-newLinks:
-				for _, link := range links {
-					if !seen[link] {
+				for link, depth := range links {
+					if depth+1 > 2 {
+						continue
+					}
+					if !strings.Contains(link, url) {
+						continue
+					}
+					if !seen[link] || link[len(link)-1] == '/' && !seen[link[:len(link)-1]] { //проверить, что это наш домен, проверить на слэш в конце
+						started <- 1
 						seen[link] = true
-						page, attached, _ = getLinks(link)
+						page, attached, _ = getLinks(link, depth+1)
 						pages <- page
 						attachments <- attached
+						newLinks <- page.Links
+						finished <- 1
 					}
 				}
-			case page := <-pages:
-				indexed = append(indexed, page.URL)
-				go SaveHTML(page.URL, page.HTML, resp.Request.URL.String())
-
+			case page2 := <-pages:
+				if _, ok := saved[page2.URL]; !ok {
+					saved[page2.URL] = page2
+					SaveHTML(page2.URL, page2.HTML, resp.Request.URL.String())
+				}
 			case attachment := <-attachments:
 				for _, link := range attachment {
+					SaveAttachment(link, resp.Request.URL.String())
 					files = append(files, link)
 				}
+			default:
+				if len(newLinks) == 0 && len(pages) == 0 && len(attachments) == 0 {
+					log.Println("\nFinished scraping the site...")
+					break EXIT //goto EXIT2
+				}
 			}
-
-			if len(started) > 1 && len(scanning) == 0 && len(started) == len(finished) {
-				break
-			}
+			//if len(started) > 1 && len(scanning) == 0 && len(started) == len(finished) {
+			//	break
+			//}
 		}
 
-		log.Println("\nFinished scraping the site...")
-	} else {
+		//log.Println("\nFinished scraping the site...")
+	} else { //скачка файла, а не всего сайта
 		resp, err := http.Get(url)
 		if err != nil {
 			log.Fatal(err)
@@ -229,6 +199,7 @@ func wget(fl flags, url string) {
 
 		io.Copy(out, resp.Body)
 	}
+	//EXIT2:
 }
 
 func exists(path string) bool {
@@ -237,44 +208,41 @@ func exists(path string) bool {
 }
 
 func SaveHTML(url string, html, root string) (err error) {
-	filepath := strings.Replace(url, root, "", 1)
-	if filepath == "" {
-		filepath = "/index.html"
-	}
-	//
-	//if len(strings.Split(url, "/")) > 1 {
-	//	if string(filepath[len(filepath)-1]) == "/" {
-	//		// if the url is a final url in a folder, like example.com/path
-	//		// this will create the folder "path" and, inside, the index.html file
-	//		if !exists(url + filepath) {
-	//			os.MkdirAll(url+filepath, 0755) // first create directory
-	//			filepath = filepath + "index.html"
-	//		}
-	//	} else {
-	//		// if the url is not a final url in a folder, like example.com/path/bum.html
-	//		// this will create the folder "path" and, inside, the bum.html file
-	//		paths := strings.Split(url, "/")
-	//		var path string
-	//		if len(paths) <= 1 {
-	//			path = url
-	//		} else {
-	//			total := paths[:len(paths)-1]
-	//			path = strings.Join(total[:], "/")
-	//
-	//		}
-	//		if !exists(url + path) {
-	//			os.MkdirAll(url+path, 0755) // first create directory
-	//		}
-	//	}
-	//}
-
 	if !exists("dir") {
 		os.MkdirAll("dir", 0755) // first create directory
 	}
-
 	os.Chdir("dir")
-	defer os.Chdir("..")
-	str := url[8:] + "index.html"
+	defer os.Chdir("C:\\Users\\los28\\GolandProjects\\L0\\l2\\develop\\dev09")
+
+	filepath := strings.Replace(url, root, "", 1)
+	if filepath == "" || filepath == "/" {
+		filepath = "index.html"
+	}
+	lastSlash := strings.LastIndex(filepath, "/")
+	if lastSlash != -1 {
+		dir := filepath[1 : lastSlash+1]
+		if !exists(dir) {
+			os.MkdirAll(dir, 0755) // first create directory
+		}
+		os.Chdir(dir)
+		filepath = filepath[lastSlash+1:]
+	}
+	//dir := filepath
+	//if strings.HasSuffix(dir, ".html") {
+	//	dir = dir[:len(dir)-5]
+	//}
+	//
+	//if !exists(dir) {
+	//	os.MkdirAll(dir, 0755) // first create directory
+	//}
+
+	//os.Chdir(dir)
+
+	//str := url[8:]
+	str := filepath
+	if !strings.Contains(str, ".html") {
+		str = str + ".html"
+	}
 	f, err := os.Create(str)
 	if err != nil {
 
@@ -284,5 +252,44 @@ func SaveHTML(url string, html, root string) (err error) {
 
 	_, err = io.Copy(f, bytes.NewBufferString(html))
 
+	return
+}
+
+func SaveAttachment(url, root string) (err error) {
+	if !exists("dir") {
+		os.MkdirAll("dir", 0755) // first create directory
+	}
+	os.Chdir("dir")
+	defer os.Chdir("C:\\Users\\los28\\GolandProjects\\L0\\l2\\develop\\dev09")
+	filepath := strings.Replace(url, root, "", 1)
+	if filepath == "" {
+		return
+	}
+
+	// Get last path
+
+	lastSlash := strings.LastIndex(filepath, "/")
+	if lastSlash != -1 {
+		dir := filepath[1 : lastSlash+1]
+		if !exists(dir) {
+			os.MkdirAll(dir, 0755) // first create directory
+		}
+		os.Chdir(dir)
+		filepath = filepath[lastSlash+1:]
+	}
+
+	resp, err := http.Get(url)
+	if err != nil {
+		return
+	}
+	defer resp.Body.Close()
+
+	f, err := os.Create(filepath)
+	if err != nil {
+		return
+	}
+	defer f.Close()
+
+	_, err = io.Copy(f, resp.Body)
 	return
 }
