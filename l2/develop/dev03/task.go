@@ -101,7 +101,12 @@ func sortUtil(fileName string, fl flags) {
 	sort.Sort(linesToSort{lines, fl})
 
 	writeFile, err := os.Create(fileName[0:len(fileName)-4] + "_sorted.txt")
-	defer writeFile.Close()
+	defer func(writeFile *os.File) {
+		err := writeFile.Close()
+		if err != nil {
+			log.Println("can't close this file")
+		}
+	}(writeFile)
 	if err != nil {
 		log.Fatal("Unable to create file:", err)
 	}

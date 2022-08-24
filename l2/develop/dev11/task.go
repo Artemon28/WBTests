@@ -48,7 +48,10 @@ func createEvent(w http.ResponseWriter, r *http.Request) {
 	event, err := parseEvent(r.Body)
 	if err != nil {
 		w.WriteHeader(400)
-		w.Write([]byte("Error with parsing body"))
+		_, err := w.Write([]byte("Error with parsing body"))
+		if err != nil {
+			w.WriteHeader(500)
+		}
 		return
 	}
 	result := addEvent(&event)
@@ -57,14 +60,20 @@ func createEvent(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.WriteHeader(200)
-	w.Write(result)
+	_, err = w.Write(result)
+	if err != nil {
+		w.WriteHeader(500)
+	}
 }
 
 func updateEvent(w http.ResponseWriter, r *http.Request) {
 	event, err := parseEvent(r.Body)
 	if err != nil {
 		w.WriteHeader(400)
-		w.Write([]byte("Error with parsing body"))
+		_, err := w.Write([]byte("Error with parsing body"))
+		if err != nil {
+			w.WriteHeader(500)
+		}
 		return
 	}
 	result := updateEv(&event)
@@ -73,14 +82,20 @@ func updateEvent(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.WriteHeader(200)
-	w.Write(result)
+	_, err = w.Write(result)
+	if err != nil {
+		w.WriteHeader(500)
+	}
 }
 
 func deleteEvent(w http.ResponseWriter, r *http.Request) {
 	event, err := parseEvent(r.Body)
 	if err != nil {
 		w.WriteHeader(400)
-		w.Write([]byte("Error with parsing body"))
+		_, err := w.Write([]byte("Error with parsing body"))
+		if err != nil {
+			w.WriteHeader(500)
+		}
 		return
 	}
 	result := deleteEv(event.Name)
@@ -89,14 +104,20 @@ func deleteEvent(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.WriteHeader(200)
-	w.Write(result)
+	_, err = w.Write(result)
+	if err != nil {
+		w.WriteHeader(500)
+	}
 }
 
 func eventsForDay(w http.ResponseWriter, r *http.Request) {
 	date := r.URL.Query().Get("date")
 	if date == "" {
 		w.WriteHeader(400)
-		w.Write([]byte("No field date in request"))
+		_, err := w.Write([]byte("No field date in request"))
+		if err != nil {
+			w.WriteHeader(500)
+		}
 		return
 	}
 	result := getEventsForDay(date)
@@ -105,14 +126,20 @@ func eventsForDay(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.WriteHeader(200)
-	w.Write(result)
+	_, err := w.Write(result)
+	if err != nil {
+		w.WriteHeader(500)
+	}
 }
 
 func eventsForWeek(w http.ResponseWriter, r *http.Request) {
 	date := r.URL.Query().Get("date")
 	if date == "" {
 		w.WriteHeader(400)
-		w.Write([]byte("No field date in request"))
+		_, err := w.Write([]byte("No field date in request"))
+		if err != nil {
+			w.WriteHeader(500)
+		}
 		return
 	}
 	result := getEventsForWeek(date)
@@ -121,14 +148,20 @@ func eventsForWeek(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.WriteHeader(200)
-	w.Write(result)
+	_, err := w.Write(result)
+	if err != nil {
+		w.WriteHeader(500)
+	}
 }
 
 func eventsForMonth(w http.ResponseWriter, r *http.Request) {
 	date := r.URL.Query().Get("date")
 	if date == "" {
 		w.WriteHeader(400)
-		w.Write([]byte("No field date in request"))
+		_, err := w.Write([]byte("No field date in request"))
+		if err != nil {
+			w.WriteHeader(500)
+		}
 		return
 	}
 	result := getEventsForMonth(date)
@@ -137,7 +170,10 @@ func eventsForMonth(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.WriteHeader(200)
-	w.Write(result)
+	_, err := w.Write(result)
+	if err != nil {
+		w.WriteHeader(500)
+	}
 }
 
 func main() {

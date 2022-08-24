@@ -43,7 +43,12 @@ func grep(fl flags, templ, fileName string) {
 	if err != nil {
 		panic(err)
 	}
-	defer file.Close()
+	defer func(file *os.File) {
+		err := file.Close()
+		if err != nil {
+			log.Println("i can't close this file")
+		}
+	}(file)
 
 	sc := bufio.NewScanner(file)
 	for sc.Scan() {
@@ -71,7 +76,12 @@ func grep(fl flags, templ, fileName string) {
 	}
 
 	writeFile, err := os.Create(fileName[0:len(fileName)-4] + "_sorted.txt")
-	defer writeFile.Close()
+	defer func(writeFile *os.File) {
+		err := writeFile.Close()
+		if err != nil {
+			log.Println("i can't close this file")
+		}
+	}(writeFile)
 	if err != nil {
 		log.Fatal("Unable to create file:", err)
 	}
